@@ -46,3 +46,18 @@ curl -vvv -X POST --data '@./payloads/tiny' --unix-socket /home/jefjiang/tmp/env
 
 # Start HTTP Fortio Client
 ~/tmp/fortio load -no-reresolve -uniform -k -ping -qps 1000 -c 1 -n 100000 -payload-file ./envoy-configs/payloads/tiny -unix-socket /home/jefjiang/tmp/envoy-client-http.sock http://localhost
+
+----
+
+6. Test full gRPC service mesh
+# Start gRPC Server
+rm ~/tmp/fortio-http.sock ~/tmp/fortio-grpc.sock; ~/tmp/fortio server -http-port ~/tmp/fortio-http.sock -redirect-port 9081 -grpc-port ~/tmp/fortio-grpc.sock -payload-file ./payloads/tiny
+
+# Start Envoy for gRPC Server
+../indis-configs/bin/envoy -c ./envoy-server-grpc.yaml --base-id 0
+
+# Start Envoy for gRPC Client
+../indis-configs/bin/envoy -c envoy-client-grpc.yaml --base-id 1
+
+# Start gRPC Fortio Client
+~/tmp/fortio load -no-reresolve -uniform -k -grpc -ping -qps 1000 -c 1 -n 100000 -payload-file ./envoy-configs/payloads/tiny unix:/home/jefjiang/tmp/envoy-client-grpc.sock
