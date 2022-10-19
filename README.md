@@ -11,3 +11,14 @@ curl -vvv -X POST --data '@./envoy-configs/payloads/tiny' --unix-socket ~/tmp/fo
 ~/tmp/fortio load -no-reresolve -uniform -k -grpc -ping -qps 1000 -c 1 -n 10000 -payload-file ./envoy-configs/payloads/tiny  unix:/home/jefjiang/tmp/fortio-grpc.sock 
 # Start HTTP client (HTTP1.1), connecting to local UDS socket for sending HTTP1.1 load
 ~/tmp/fortio load -no-reresolve -uniform -k -ping -qps 1000 -c 1 -n 10000 -payload-file ./envoy-configs/payloads/tiny -unix-socket /home/jefjiang/tmp/fortio-http.sock http://localhost
+
+3. Start Server side Envoy Sidecar
+# Start Envoy Proxy with Trace logging level
+./indis-configs/bin/envoy -c envoyconfig_benchmark_static_uds.yaml -l trace
+
+# Curl Test if Envoy works
+curl -k -v -X POST --data '@./payloads/tiny' https://localhost:18080/
+
+# Start Fortio Client
+~/tmp/fortio load -no-reresolve -uniform -k -ping -qps 1000 -c 1 -n 10000 -payload-file ./envoy-configs/payloads/tiny https://localhost:18080
+
